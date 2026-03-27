@@ -1,0 +1,22 @@
+# 분석 시 clone된 리포지토리들 (이미지에 포함되면 안 됨)
+flask/
+exploitable-repo/
+GongGuHaSong-Refactor/
+*/_output/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Git
+.git/
+
+# IDE
+.idea/
+.vscode/
+
+# Misc
+*.egg-info/
+.pytest_cache/

@@ -1,0 +1,692 @@
+{
+  "timestamp": "2026-03-21 02:40:31",
+  "samples": {
+    "malicious": 10,
+    "benign": 10,
+    "typosquatting": 30
+  },
+  "results": {
+    "pattern_matching": {
+      "tp": 10,
+      "fp": 2,
+      "tn": 8,
+      "fn": 0,
+      "precision": 0.8333,
+      "recall": 1.0,
+      "f1": 0.9091,
+      "fp_rate": 0.2,
+      "accuracy": 0.9,
+      "details": [
+        {
+          "file": "backdoor_exec.py",
+          "label": "malicious",
+          "detected": true,
+          "status": "TP",
+          "time_ms": 0.7
+        },
+        {
+          "file": "crypto_miner.py",
+          "label": "malicious",
+          "detected": true,
+          "status": "TP",
+          "time_ms": 0.6
+        },
+        {
+          "file": "data_exfil.py",
+          "label": "malicious",
+          "detected": true,
+          "status": "TP",
+          "time_ms": 0.7
+        },
+        {
+          "file": "env_stealer.py",
+          "label": "malicious",
+          "detected": true,
+          "status": "TP",
+          "time_ms": 0.8
+        },
+        {
+          "file": "eval_injection.py",
+          "label": "malicious",
+          "detected": true,
+          "status": "TP",
+          "time_ms": 0.4
+        },
+        {
+          "file": "install_hook.py",
+          "label": "malicious",
+          "detected": true,
+          "status": "TP",
+          "time_ms": 0.5
+        },
+        {
+          "file": "obfuscated_loader.py",
+          "label": "malicious",
+          "detected": true,
+          "status": "TP",
+          "time_ms": 0.4
+        },
+        {
+          "file": "pickle_rce.py",
+          "label": "malicious",
+          "detected": true,
+          "status": "TP",
+          "time_ms": 0.5
+        },
+        {
+          "file": "socket_backdoor.py",
+          "label": "malicious",
+          "detected": true,
+          "status": "TP",
+          "time_ms": 0.5
+        },
+        {
+          "file": "supply_chain_setup.py",
+          "label": "malicious",
+          "detected": true,
+          "status": "TP",
+          "time_ms": 1.1
+        },
+        {
+          "file": "base64_legit.py",
+          "label": "benign",
+          "detected": true,
+          "status": "FP (오탐)",
+          "time_ms": 0.9
+        },
+        {
+          "file": "config_loader.py",
+          "label": "benign",
+          "detected": false,
+          "status": "TN",
+          "time_ms": 1.0
+        },
+        {
+          "file": "data_processor.py",
+          "label": "benign",
+          "detected": false,
+          "status": "TN",
+          "time_ms": 0.7
+        },
+        {
+          "file": "db_models.py",
+          "label": "benign",
+          "detected": false,
+          "status": "TN",
+          "time_ms": 0.6
+        },
+        {
+          "file": "http_client.py",
+          "label": "benign",
+          "detected": false,
+          "status": "TN",
+          "time_ms": 18.7
+        },
+        {
+          "file": "legit_setup.py",
+          "label": "benign",
+          "detected": false,
+          "status": "TN",
+          "time_ms": 3.7
+        },
+        {
+          "file": "math_utils.py",
+          "label": "benign",
+          "detected": false,
+          "status": "TN",
+          "time_ms": 0.7
+        },
+        {
+          "file": "subprocess_legit.py",
+          "label": "benign",
+          "detected": true,
+          "status": "FP (오탐)",
+          "time_ms": 0.8
+        },
+        {
+          "file": "test_helper.py",
+          "label": "benign",
+          "detected": false,
+          "status": "TN",
+          "time_ms": 0.9
+        },
+        {
+          "file": "web_server.py",
+          "label": "benign",
+          "detected": false,
+          "status": "TN",
+          "time_ms": 0.9
+        }
+      ]
+    },
+    "ensemble": {
+      "tp": 2,
+      "fp": 0,
+      "tn": 10,
+      "fn": 8,
+      "precision": 1.0,
+      "recall": 0.2,
+      "f1": 0.3333,
+      "fp_rate": 0.0,
+      "accuracy": 0.6,
+      "details": [
+        {
+          "file": "backdoor_exec.py",
+          "label": "malicious",
+          "detected": true,
+          "status": "TP",
+          "time_ms": 3.5
+        },
+        {
+          "file": "crypto_miner.py",
+          "label": "malicious",
+          "detected": true,
+          "status": "TP",
+          "time_ms": 0.6
+        },
+        {
+          "file": "data_exfil.py",
+          "label": "malicious",
+          "detected": false,
+          "status": "FN (놓침)",
+          "time_ms": 0.8
+        },
+        {
+          "file": "env_stealer.py",
+          "label": "malicious",
+          "detected": false,
+          "status": "FN (놓침)",
+          "time_ms": 0.3
+        },
+        {
+          "file": "eval_injection.py",
+          "label": "malicious",
+          "detected": false,
+          "status": "FN (놓침)",
+          "time_ms": 0.2
+        },
+        {
+          "file": "install_hook.py",
+          "label": "malicious",
+          "detected": false,
+          "status": "FN (놓침)",
+          "time_ms": 0.3
+        },
+        {
+          "file": "obfuscated_loader.py",
+          "label": "malicious",
+          "detected": false,
+          "status": "FN (놓침)",
+          "time_ms": 0.2
+        },
+        {
+          "file": "pickle_rce.py",
+          "label": "malicious",
+          "detected": false,
+          "status": "FN (놓침)",
+          "time_ms": 0.2
+        },
+        {
+          "file": "socket_backdoor.py",
+          "label": "malicious",
+          "detected": false,
+          "status": "FN (놓침)",
+          "time_ms": 0.2
+        },
+        {
+          "file": "supply_chain_setup.py",
+          "label": "malicious",
+          "detected": false,
+          "status": "FN (놓침)",
+          "time_ms": 3.2
+        },
+        {
+          "file": "base64_legit.py",
+          "label": "benign",
+          "detected": false,
+          "status": "TN",
+          "time_ms": 2.0
+        },
+        {
+          "file": "config_loader.py",
+          "label": "benign",
+          "detected": false,
+          "status": "TN",
+          "time_ms": 0.5
+        },
+        {
+          "file": "data_processor.py",
+          "label": "benign",
+          "detected": false,
+          "status": "TN",
+          "time_ms": 0.4
+        },
+        {
+          "file": "db_models.py",
+          "label": "benign",
+          "detected": false,
+          "status": "TN",
+          "time_ms": 0.4
+        },
+        {
+          "file": "http_client.py",
+          "label": "benign",
+          "detected": false,
+          "status": "TN",
+          "time_ms": 0.4
+        },
+        {
+          "file": "legit_setup.py",
+          "label": "benign",
+          "detected": false,
+          "status": "TN",
+          "time_ms": 0.3
+        },
+        {
+          "file": "math_utils.py",
+          "label": "benign",
+          "detected": false,
+          "status": "TN",
+          "time_ms": 0.3
+        },
+        {
+          "file": "subprocess_legit.py",
+          "label": "benign",
+          "detected": false,
+          "status": "TN",
+          "time_ms": 0.3
+        },
+        {
+          "file": "test_helper.py",
+          "label": "benign",
+          "detected": false,
+          "status": "TN",
+          "time_ms": 0.4
+        },
+        {
+          "file": "web_server.py",
+          "label": "benign",
+          "detected": false,
+          "status": "TN",
+          "time_ms": 0.3
+        }
+      ]
+    },
+    "combined": {
+      "tp": 10,
+      "fp": 2,
+      "tn": 8,
+      "fn": 0,
+      "precision": 0.8333,
+      "recall": 1.0,
+      "f1": 0.9091,
+      "fp_rate": 0.2,
+      "accuracy": 0.9,
+      "details": [
+        {
+          "file": "backdoor_exec.py",
+          "label": "malicious",
+          "detected": true,
+          "status": "TP",
+          "time_ms": 0.5
+        },
+        {
+          "file": "crypto_miner.py",
+          "label": "malicious",
+          "detected": true,
+          "status": "TP",
+          "time_ms": 0.6
+        },
+        {
+          "file": "data_exfil.py",
+          "label": "malicious",
+          "detected": true,
+          "status": "TP",
+          "time_ms": 1.7
+        },
+        {
+          "file": "env_stealer.py",
+          "label": "malicious",
+          "detected": true,
+          "status": "TP",
+          "time_ms": 0.9
+        },
+        {
+          "file": "eval_injection.py",
+          "label": "malicious",
+          "detected": true,
+          "status": "TP",
+          "time_ms": 1.3
+        },
+        {
+          "file": "install_hook.py",
+          "label": "malicious",
+          "detected": true,
+          "status": "TP",
+          "time_ms": 1.2
+        },
+        {
+          "file": "obfuscated_loader.py",
+          "label": "malicious",
+          "detected": true,
+          "status": "TP",
+          "time_ms": 3.1
+        },
+        {
+          "file": "pickle_rce.py",
+          "label": "malicious",
+          "detected": true,
+          "status": "TP",
+          "time_ms": 1.5
+        },
+        {
+          "file": "socket_backdoor.py",
+          "label": "malicious",
+          "detected": true,
+          "status": "TP",
+          "time_ms": 0.6
+        },
+        {
+          "file": "supply_chain_setup.py",
+          "label": "malicious",
+          "detected": true,
+          "status": "TP",
+          "time_ms": 0.4
+        },
+        {
+          "file": "base64_legit.py",
+          "label": "benign",
+          "detected": true,
+          "status": "FP (오탐)",
+          "time_ms": 0.6
+        },
+        {
+          "file": "config_loader.py",
+          "label": "benign",
+          "detected": false,
+          "status": "TN",
+          "time_ms": 0.7
+        },
+        {
+          "file": "data_processor.py",
+          "label": "benign",
+          "detected": false,
+          "status": "TN",
+          "time_ms": 0.7
+        },
+        {
+          "file": "db_models.py",
+          "label": "benign",
+          "detected": false,
+          "status": "TN",
+          "time_ms": 0.9
+        },
+        {
+          "file": "http_client.py",
+          "label": "benign",
+          "detected": false,
+          "status": "TN",
+          "time_ms": 0.8
+        },
+        {
+          "file": "legit_setup.py",
+          "label": "benign",
+          "detected": false,
+          "status": "TN",
+          "time_ms": 0.5
+        },
+        {
+          "file": "math_utils.py",
+          "label": "benign",
+          "detected": false,
+          "status": "TN",
+          "time_ms": 0.5
+        },
+        {
+          "file": "subprocess_legit.py",
+          "label": "benign",
+          "detected": true,
+          "status": "FP (오탐)",
+          "time_ms": 0.6
+        },
+        {
+          "file": "test_helper.py",
+          "label": "benign",
+          "detected": false,
+          "status": "TN",
+          "time_ms": 0.6
+        },
+        {
+          "file": "web_server.py",
+          "label": "benign",
+          "detected": false,
+          "status": "TN",
+          "time_ms": 0.4
+        }
+      ]
+    },
+    "typosquatting": {
+      "tp": 11,
+      "fp": 0,
+      "tn": 15,
+      "fn": 4,
+      "precision": 1.0,
+      "recall": 0.7333,
+      "f1": 0.8462,
+      "fp_rate": 0.0,
+      "accuracy": 0.8667,
+      "details": [
+        {
+          "package": "reqeusts",
+          "expected_malicious": true,
+          "detected": false,
+          "matched_official": null,
+          "status": "FN (놓침)"
+        },
+        {
+          "package": "requets",
+          "expected_malicious": true,
+          "detected": true,
+          "matched_official": "requests",
+          "status": "TP"
+        },
+        {
+          "package": "reqests",
+          "expected_malicious": true,
+          "detected": true,
+          "matched_official": "requests",
+          "status": "TP"
+        },
+        {
+          "package": "numppy",
+          "expected_malicious": true,
+          "detected": true,
+          "matched_official": "numpy",
+          "status": "TP"
+        },
+        {
+          "package": "nunpy",
+          "expected_malicious": true,
+          "detected": false,
+          "matched_official": null,
+          "status": "FN (놓침)"
+        },
+        {
+          "package": "pandsa",
+          "expected_malicious": true,
+          "detected": false,
+          "matched_official": null,
+          "status": "FN (놓침)"
+        },
+        {
+          "package": "pandass",
+          "expected_malicious": true,
+          "detected": true,
+          "matched_official": "pandas",
+          "status": "TP"
+        },
+        {
+          "package": "flaask",
+          "expected_malicious": true,
+          "detected": true,
+          "matched_official": "flask",
+          "status": "TP"
+        },
+        {
+          "package": "flassk",
+          "expected_malicious": true,
+          "detected": true,
+          "matched_official": "flask",
+          "status": "TP"
+        },
+        {
+          "package": "djanogo",
+          "expected_malicious": true,
+          "detected": true,
+          "matched_official": "django",
+          "status": "TP"
+        },
+        {
+          "package": "djnago",
+          "expected_malicious": true,
+          "detected": false,
+          "matched_official": null,
+          "status": "FN (놓침)"
+        },
+        {
+          "package": "matplotib",
+          "expected_malicious": true,
+          "detected": true,
+          "matched_official": "matplotlib",
+          "status": "TP"
+        },
+        {
+          "package": "pilllow",
+          "expected_malicious": true,
+          "detected": true,
+          "matched_official": "pillow",
+          "status": "TP"
+        },
+        {
+          "package": "expresss",
+          "expected_malicious": true,
+          "detected": true,
+          "matched_official": "express",
+          "status": "TP"
+        },
+        {
+          "package": "lodassh",
+          "expected_malicious": true,
+          "detected": true,
+          "matched_official": "lodash",
+          "status": "TP"
+        },
+        {
+          "package": "requests",
+          "expected_malicious": false,
+          "detected": false,
+          "matched_official": null,
+          "status": "TN"
+        },
+        {
+          "package": "numpy",
+          "expected_malicious": false,
+          "detected": false,
+          "matched_official": null,
+          "status": "TN"
+        },
+        {
+          "package": "pandas",
+          "expected_malicious": false,
+          "detected": false,
+          "matched_official": null,
+          "status": "TN"
+        },
+        {
+          "package": "flask",
+          "expected_malicious": false,
+          "detected": false,
+          "matched_official": null,
+          "status": "TN"
+        },
+        {
+          "package": "django",
+          "expected_malicious": false,
+          "detected": false,
+          "matched_official": null,
+          "status": "TN"
+        },
+        {
+          "package": "scipy",
+          "expected_malicious": false,
+          "detected": false,
+          "matched_official": null,
+          "status": "TN"
+        },
+        {
+          "package": "matplotlib",
+          "expected_malicious": false,
+          "detected": false,
+          "matched_official": null,
+          "status": "TN"
+        },
+        {
+          "package": "pillow",
+          "expected_malicious": false,
+          "detected": false,
+          "matched_official": null,
+          "status": "TN"
+        },
+        {
+          "package": "fastapi",
+          "expected_malicious": false,
+          "detected": false,
+          "matched_official": null,
+          "status": "TN"
+        },
+        {
+          "package": "celery",
+          "expected_malicious": false,
+          "detected": false,
+          "matched_official": null,
+          "status": "TN"
+        },
+        {
+          "package": "redis",
+          "expected_malicious": false,
+          "detected": false,
+          "matched_official": null,
+          "status": "TN"
+        },
+        {
+          "package": "sqlalchemy",
+          "expected_malicious": false,
+          "detected": false,
+          "matched_official": null,
+          "status": "TN"
+        },
+        {
+          "package": "pydantic",
+          "expected_malicious": false,
+          "detected": false,
+          "matched_official": null,
+          "status": "TN"
+        },
+        {
+          "package": "boto3",
+          "expected_malicious": false,
+          "detected": false,
+          "matched_official": null,
+          "status": "TN"
+        },
+        {
+          "package": "pytest",
+          "expected_malicious": false,
+          "detected": false,
+          "matched_official": null,
+          "status": "TN"
+        }
+      ]
+    }
+  }
+}

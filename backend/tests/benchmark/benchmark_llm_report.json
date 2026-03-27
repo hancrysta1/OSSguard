@@ -1,0 +1,189 @@
+{
+  "timestamp": "2026-03-21 12:00:23",
+  "samples": {
+    "malicious": 10,
+    "benign": 10
+  },
+  "before": {
+    "tp": 10,
+    "fp": 2,
+    "tn": 8,
+    "fn": 0,
+    "precision": 0.8333,
+    "recall": 1.0,
+    "f1": 0.9091,
+    "fp_rate": 0.2
+  },
+  "after": {
+    "tp": 9,
+    "fp": 3,
+    "tn": 7,
+    "fn": 1,
+    "precision": 0.75,
+    "recall": 0.9,
+    "f1": 0.8182,
+    "fp_rate": 0.3,
+    "details": [
+      {
+        "file": "backdoor_exec.py",
+        "label": "malicious",
+        "detected": true,
+        "status": "TP",
+        "llm_verdict": "unknown",
+        "llm_reason": "파싱 실패"
+      },
+      {
+        "file": "crypto_miner.py",
+        "label": "malicious",
+        "detected": true,
+        "status": "TP",
+        "llm_verdict": "unknown",
+        "llm_reason": "파싱 실패"
+      },
+      {
+        "file": "data_exfil.py",
+        "label": "malicious",
+        "detected": true,
+        "status": "TP",
+        "llm_verdict": "unknown",
+        "llm_reason": "파싱 실패"
+      },
+      {
+        "file": "env_stealer.py",
+        "label": "malicious",
+        "detected": true,
+        "status": "TP",
+        "llm_verdict": "unknown",
+        "llm_reason": "파싱 실패"
+      },
+      {
+        "file": "eval_injection.py",
+        "label": "malicious",
+        "detected": true,
+        "status": "TP",
+        "llm_verdict": "unknown",
+        "llm_reason": "파싱 실패"
+      },
+      {
+        "file": "install_hook.py",
+        "label": "malicious",
+        "detected": true,
+        "status": "TP",
+        "llm_verdict": "malicious",
+        "llm_reason": "위험 키워드 'subprocess'와 'os.system'가 탐지되었습니다."
+      },
+      {
+        "file": "obfuscated_loader.py",
+        "label": "malicious",
+        "detected": true,
+        "status": "TP",
+        "llm_verdict": "malicious",
+        "llm_reason": "위험 키워드가 탐지되었습니다."
+      },
+      {
+        "file": "pickle_rce.py",
+        "label": "malicious",
+        "detected": false,
+        "status": "FN",
+        "llm_verdict": "safe",
+        "llm_reason": "정상적인 목적"
+      },
+      {
+        "file": "socket_backdoor.py",
+        "label": "malicious",
+        "detected": true,
+        "status": "TP",
+        "llm_verdict": "unknown",
+        "llm_reason": "파싱 실패"
+      },
+      {
+        "file": "supply_chain_setup.py",
+        "label": "malicious",
+        "detected": true,
+        "status": "TP",
+        "llm_verdict": "malicious",
+        "llm_reason": "subprocess와 os.system은 shell을 사용하여 명령을 executed 하므로 위험"
+      },
+      {
+        "file": "base64_legit.py",
+        "label": "benign",
+        "detected": true,
+        "status": "FP",
+        "llm_verdict": "unknown",
+        "llm_reason": "an error was encountered while running the model: unexpected EOF (status code: 500)"
+      },
+      {
+        "file": "config_loader.py",
+        "label": "benign",
+        "detected": false,
+        "status": "TN",
+        "llm_verdict": "",
+        "llm_reason": ""
+      },
+      {
+        "file": "data_processor.py",
+        "label": "benign",
+        "detected": false,
+        "status": "TN",
+        "llm_verdict": "",
+        "llm_reason": ""
+      },
+      {
+        "file": "db_models.py",
+        "label": "benign",
+        "detected": false,
+        "status": "TN",
+        "llm_verdict": "",
+        "llm_reason": ""
+      },
+      {
+        "file": "http_client.py",
+        "label": "benign",
+        "detected": true,
+        "status": "FP",
+        "llm_verdict": "unknown",
+        "llm_reason": "llama runner process has terminated: signal: killed (status code: 500)"
+      },
+      {
+        "file": "legit_setup.py",
+        "label": "benign",
+        "detected": false,
+        "status": "TN",
+        "llm_verdict": "",
+        "llm_reason": ""
+      },
+      {
+        "file": "math_utils.py",
+        "label": "benign",
+        "detected": false,
+        "status": "TN",
+        "llm_verdict": "",
+        "llm_reason": ""
+      },
+      {
+        "file": "subprocess_legit.py",
+        "label": "benign",
+        "detected": true,
+        "status": "FP",
+        "llm_verdict": "unknown",
+        "llm_reason": "llama runner process has terminated: signal: killed (status code: 500)"
+      },
+      {
+        "file": "test_helper.py",
+        "label": "benign",
+        "detected": false,
+        "status": "TN",
+        "llm_verdict": "",
+        "llm_reason": ""
+      },
+      {
+        "file": "web_server.py",
+        "label": "benign",
+        "detected": false,
+        "status": "TN",
+        "llm_verdict": "",
+        "llm_reason": ""
+      }
+    ]
+  }
+}
