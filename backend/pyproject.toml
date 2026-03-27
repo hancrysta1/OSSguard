@@ -1,0 +1,21 @@
+[project]
+name = "ossguard-backend"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.34.0",
+    "celery[redis]>=5.4.0",
+    "redis>=5.0.0",
+    "pydantic-settings>=2.6.0",
+    "structlog>=24.0.0",
+    "yara-python>=4.5.0",
+    "ollama>=0.4.0",
+    "transformers>=4.47.0",
+    "torch>=2.5.0",
+    "websockets>=14.0",
+    "httpx>=0.28.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "pytest-asyncio>=0.24", "httpx>=0.28.0"]
