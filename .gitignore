@@ -35,6 +35,14 @@ docker-compose.override.yml
 output_*/
 *.json.tmp
 
+# 분석 테스트용 다운로드 패키지
+backend/flask/
+backend/flask-*/
+backend/django-*/
+backend/requests-*/
+backend/browser-cookies-*/
+backend/lodash-*/
+
 # Proto generated
 protos/*_pb2.py
 protos/*_pb2_grpc.py
