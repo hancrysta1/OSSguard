@@ -65,7 +65,7 @@ Celery Worker (비동기)
 - 깃허브 링크 : [github.com/TrustBOM](https://github.com/TrustBOM)
 - GitHub 분석(:8000), PyPI/npm 분석(:8001) FastAPI 서버를 각각 uvicorn으로 실행
 - docker-compose에는 RabbitMQ, Redis만 포함. 서버와 Celery 워커는 로컬 실행
-- 프론트엔드는 페이지 구조만 존재, 백엔드 미연동 (더미 데이터)
+
 
 
 ### 리팩토링
