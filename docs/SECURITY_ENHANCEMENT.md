@@ -41,33 +41,27 @@ Socket.dev의 보안 리서치팀이 PyPI에서 `browser-cookies3`라는 악성 
 
 ### 1-2. 기존 방식의 한계 분석
 
-**테스트 결과 (Before):**
+**`browser-cookies3`검색 -> 악성코드가 나와야 정상**
 
-```
-=======================================================
-  Before: 기존 타이포스쿼팅 탐지
-  패키지 목록: 10개 | 알고리즘: SequenceMatcher
-  Threshold: 0.9
-=======================================================
+**테스트 결과 (Before)**
+<img width="1500" height="1620" alt="image" src="https://github.com/user-attachments/assets/b1e188d9-dc9a-47ab-88d9-08e97142a7a2" />
+<img width="1500" height="1620" alt="image" src="https://github.com/user-attachments/assets/43a642d8-b5e6-40ac-9e59-eec0466bacaf" />
 
-  [FN 놓침] browser-cookies3            (실제 악성 패키지, 196회 다운로드)
-  [TP 탐지] requestss                 → requests
-  [FN 놓침] djnago                      (글자 순서 변경)
-  [FN 놓침] reqeusts                    (글자 위치 변경)
-  [FN 놓침] nunpy                       (글자 탈락)
 
-  Precision: 100.0%  Recall: 20.0%  F1: 33.3%
-```
 
-**`browser-cookies3`를 못 잡은 이유:**
+
+
+
+
+**`browser-cookies3`를 못 잡은 이유**
 
 기존 방식에는 두 가지 문제가 있었다.
 
 **문제 1: 비교 대상이 10개뿐**
 
-기존 코드에 하드코딩된 공식 패키지가 `requests`, `numpy`, `pandas` 등 **10개**뿐이었다. `browser-cookie3`는 목록에 없으니 **비교 자체를 하지 않았다.** PyPI에만 50만 개 이상의 패키지가 있는데, 10개만 보고 있던 것이다.
+기존 분석 시 공식 패키지가 `requests`, `numpy`, `pandas` 등 **10개**만 하드코딩이었다. `browser-cookie3`는 목록에 없으니 비교 자체를 하지 않았다. PyPI에만 50만 개 이상의 패키지가 있는데, 10개만 보고 있던 것. (리팩토링 계기)
 
-**문제 2: SequenceMatcher 알고리즘의 한계**
+**문제 2: 기존 SequenceMatcher 알고리즘의 한계**
 
 목록을 늘리면 해결될까? `djnago`(django 오타)의 경우, `browser-cookie3`가 목록에 있어도 SequenceMatcher의 특성상 **글자 순서 변경(transposition)에 유사도를 낮게 계산**하는 문제가 있었다.
 
@@ -206,7 +200,7 @@ tests/test_basic.py      → 하드코딩 API 키 탐지
 tests/test_config.py     → 하드코딩 API 키 탐지
 ```
 
-실제 코드를 보면:
+실제 코드를 보면
 
 ```python
 # tests/conftest.py (Flask 공식 테스트 코드)
@@ -215,7 +209,7 @@ SECRET_KEY="test key"
 
 테스트 파일에 `SECRET_KEY`가 있는 건 당연하다. 테스트를 위한 더미 값이지 실제 비밀 키가 아니다. 하지만 키워드 탐지는 `SECRET_KEY`라는 문자열만 보고 "하드코딩된 시크릿"으로 판정한다.
 
-이것은 벤치마크의 `base64_legit.py` 오탐과 **동일한 구조의 문제**이다:
+이것은 벤치마크의 `base64_legit.py` 오탐과 **동일한 구조의 문제**이다.
 
 | 벤치마크 오탐 | 실제 프로젝트 오탐 | 공통 원인 |
 |---|---|---|
@@ -223,7 +217,7 @@ SECRET_KEY="test key"
 
 LLM 2차 판단을 적용하면 "이 파일은 `tests/` 디렉토리의 테스트 코드이고, `SECRET_KEY`는 테스트용 더미 값이다 → safe" 판정이 가능하다.
 
-LLM 2차 판단을 실제로 적용한 결과:
+LLM 2차 판단을 실제로 적용한 결과
 
 ```
 ============================================================
@@ -263,11 +257,11 @@ LLM 2차 판단을 실제로 적용한 결과:
 사용자가 대시보드 열기 → API 호출 → 11개 파일 × LLM 판단 → 응답
 ```
 
-**문제가 된 이유:**
+**문제가 된 이유**
 
 LLM 추론은 **느린 작업**이다. 특히 Docker 환경에서 CPU로 돌리는 경량 모델(llama3.2 1B)도 파일 1개당 약 30~60초가 걸린다. 11개 파일이면 최소 5분 이상이다.
 
-이를 API 응답 시점에서 수행하면:
+이를 API 응답 시점에서 수행하면
 
 1. **사용자가 대시보드를 열 때마다 5분 이상 대기** — 사용자 경험이 매우 나쁘다
 2. **타임아웃으로 매번 결과가 다름** — 처음에 5개 판단 성공, 다음에 7개, 또 다음에 4개... 일관성이 없다
@@ -285,7 +279,7 @@ After:  clone → SBOM → SCA → malware 스캔 → LLM 2차 판단 → Redis 
                                                 ↑ llm_verdict를 결과에 포함해서 저장
 ```
 
-이렇게 하면:
+이렇게 하면
 - 분석은 어차피 백그라운드에서 비동기로 돌아가므로, **LLM이 느려도 사용자가 기다릴 필요가 없다**
 - 결과가 Redis에 저장되므로, 대시보드 API는 **저장된 값을 읽기만** 하면 된다 → 빠르고 일관적이다
 - 코드가 바뀌지 않으면 **재분석 전까지 같은 결과**를 보여준다
@@ -444,7 +438,7 @@ return {
 
 `/github/g_dashboard` 엔드포인트에서 Redis에 캐시된 전체 분석 결과를 **한 번에 변환하여 반환**하도록 수정하였다.
 
-추가된 데이터:
+추가된 데이터
 
 | 필드 | 변환 내용 |
 |------|----------|
