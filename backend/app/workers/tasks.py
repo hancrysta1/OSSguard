@@ -135,6 +135,7 @@ def github_analysis_task(self, github_url: str):
     from app.services.malware import scan_directory_for_malware
     from app.services.typosquatting import run_typosquatting_check
     from app.services.dependency_confusion import check_dependency_confusion
+    from app.services.mitre import enrich_vulnerabilities_with_mitre
     from app.services.ai.risk_scorer import calculate_risk_score
 
     r = _get_redis()
@@ -169,7 +170,15 @@ def github_analysis_task(self, github_url: str):
         except Exception as e:
             log.error("sca_failed", error=str(e))
             sca_data = {"Results": []}
-        _publish_progress(task_id, "sca", "completed", 50, "Vulnerability analysis complete")
+        _publish_progress(task_id, "sca", "completed", 45, "Vulnerability analysis complete")
+
+        # MITRE ATT&CK mapping
+        _publish_progress(task_id, "mitre", "running", 47, "Mapping MITRE ATT&CK...")
+        all_vulns = get_vulnerability_analysis(sca_data)
+        all_vulns = enrich_vulnerabilities_with_mitre(all_vulns)
+        top_vulns = get_top_vulnerabilities(sca_data)
+        top_vulns = enrich_vulnerabilities_with_mitre(top_vulns)
+        _publish_progress(task_id, "mitre", "completed", 50, "MITRE ATT&CK mapping complete")
 
         # Malware
         _publish_progress(task_id, "malware", "running", 55, "Scanning for malware...")
@@ -202,9 +211,9 @@ def github_analysis_task(self, github_url: str):
             "analysis_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "package_count": len(sbom_data.get("packages", [])),
             "security_overview": security_overview,
-            "top_vulnerabilities": get_top_vulnerabilities(sca_data),
+            "top_vulnerabilities": top_vulns,
             "packages": sbom_data.get("packages", []),
-            "vulnerabilities": get_vulnerability_analysis(sca_data),
+            "vulnerabilities": all_vulns,
             "update_recommendations": get_update_recommendations(sca_data),
             "typosquatting_analysis": typo_results,
             "dependency_confusion_analysis": dep_confusion_results,

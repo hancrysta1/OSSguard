@@ -35,6 +35,7 @@ Browser (React 19)
                               │  Worker (Celery ×4)                          │
                               │       ├── Syft  → SBOM 생성                  │
                               │       ├── Trivy → CVE 스캔                   │
+                              │       ├── MITRE ATT&CK → CVE-공격기법 매핑   │
                               │       ├── YARA + 키워드 → 악성코드 1차 탐지   │
                               │       ├── Ollama (LLM) → 2차 오탐 필터링     │
                               │       ├── 4종 알고리즘 → 타이포스쿼팅 탐지    │
@@ -49,7 +50,7 @@ Browser (React 19)
 GitHub URL / 패키지명 입력
     ↓
 Celery Worker (비동기)
-    ├── Clone → SBOM → SCA → 악성코드 → 타이포스쿼팅 → 디펜던시 컨퓨전
+    ├── Clone → SBOM → SCA → MITRE 매핑 → 악성코드 → 타이포스쿼팅 → 디펜던시 컨퓨전
     ├── 각 단계마다 WebSocket으로 진행률 Push
     └── 결과 Redis 캐시 저장 (재분석 방지)
     ↓
@@ -231,7 +232,7 @@ ossguard/
 │   │   │   ├── malware.py             # 악성코드 탐지 (키워드 + YARA)
 │   │   │   ├── typosquatting.py       # 타이포스쿼팅 (4종 알고리즘)
 │   │   │   ├── dependency_confusion.py # 디펜던시 컨퓨전
-│   │   │   ├── mitre.py               # MITRE ATT&CK 매핑
+│   │   │   ├── mitre.py               # MITRE ATT&CK 매핑 (CVE → 공격기법)
 │   │   │   └── ai/                    # AI 서비스 (llm_sast, risk_scorer 등)
 │   │   └── workers/
 │   │       ├── tasks.py               # Celery 분석 파이프라인
