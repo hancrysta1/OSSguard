@@ -125,9 +125,46 @@
 | LLM 오탐 필터링 | 악성코드 탭에서 AI 판단 결과 표시 (safe/malicious 라벨) |
 | AI 보안 리포트 | AI Insights 탭에서 위험도 점수, 우선순위, 수정 제안 확인 |
 
-> 시연 영상/GIF 준비 후 교체 예정
+<img width="970" height="814" alt="image" src="https://github.com/user-attachments/assets/e8b75b34-2a7c-42a8-a165-8c4e872e22b2" />
+<br>
+<br>
+
+### github 레포 <br>
+
+- 테스트 url : https://github.com/pallets/flask <br>
+<br>
+
+![Image](https://github.com/user-attachments/assets/19c46ce8-3df2-4c86-a526-4c8b362a35b4)
+
+![Image](https://github.com/user-attachments/assets/b624dd96-9b6e-49d0-9d91-f55450fe9ae8)
+
+csv, json 파일로 내려받기도 가능하다.
+<br>
+
+![Image](https://github.com/user-attachments/assets/36b253a1-77f7-43f8-93a4-e550fb2271d6)
+<br>
+
+### PyPI <br>
+
+- 테스트 모듈 : requests 2.26.0
+<br>
+
+![Image](https://github.com/user-attachments/assets/3760888a-f1e3-4bd2-b2a6-2b5c758149f5)
+
 
 <br>
+
+### npm <br>
+
+- 테스트 모듈 : axios 0.21.0
+<br>
+
+![Image](https://github.com/user-attachments/assets/91c4c144-e2e3-4762-ac9a-d6cf681d0cf0)
+
+<br>
+<br>
+<br>
+
 
 ## 기술적 의사결정 & 트러블슈팅
 
