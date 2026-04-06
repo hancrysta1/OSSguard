@@ -64,7 +64,10 @@ Celery Worker (비동기)
 ### 원본
 - 깃허브 링크 : [github.com/TrustBOM](https://github.com/TrustBOM)
 - GitHub 분석(:8000), PyPI/npm 분석(:8001) FastAPI 서버를 각각 uvicorn으로 실행
+- Celery 워커도 2개 분리 (github_tasks/github_vhost, pypi_npm_tasks/pypi_npm_vhost)
 - docker-compose에는 RabbitMQ, Redis만 포함. 서버와 Celery 워커는 로컬 실행
+- MITRE ATT&CK 매핑 (mitreapi 라이브러리 직접 호출)
+- 프론트엔드 배포: Vercel (ossguard.vercel.app)
 
 
 
@@ -76,6 +79,7 @@ Celery Worker (비동기)
 |---|---|---|
 | 악성코드 탐지 | 키워드가 있으면 무조건 위험 판정 (오탐 20%) | 키워드 탐지 후 LLM이 "진짜 위험한가?" 재판단 (오탐 10%) |
 | 타이포스쿼팅 | 비교 대상 10개, 알고리즘 1개 (절반만 탐지) | 비교 대상 100+개, 알고리즘 4개 (91.7% 탐지) |
+| MITRE ATT&CK | mitreapi 라이브러리로 직접 호출 | CVE → CAPEC/CWE 병렬 매핑 (파이프라인 내장) |
 | 패키지 사전 검사 | 없음 (설치한 뒤에야 검사) | 설치 전에 먼저 검사 → 위험하면 설치 차단 |
 | AI 분석 | 없음 | 위험도 점수, 수정 제안, 라이선스 검증, 챗봇 |
 | 프론트엔드 | 페이지 구조만 존재, 더미 데이터 | 실제 API 연동, 차트/테이블/내보내기 완성 |
@@ -87,11 +91,13 @@ Celery Worker (비동기)
 
 | | Before | After |
 |---|---|---|
-| 서버 | FastAPI 2개 (uvicorn 각각 실행) | FastAPI 1개 (라우터로 분리) |
-| 브로커 | RabbitMQ (vhost 분리) | Redis (브로커 + 캐시 통합) |
+| 서버 | FastAPI 2개 (GitHub :8000, PyPI/npm :8001) | FastAPI 1개 (라우터로 분리) |
+| Celery | 워커 2개 분리 (github_queue, pypi_npm_queue) | 워커 1개 (통합 파이프라인, concurrency=4) |
+| 브로커 | RabbitMQ (vhost 분리: github_vhost, pypi_npm_vhost) | Redis (브로커 + 캐시 + Pub/Sub 통합) |
+| MITRE ATT&CK | mitreapi 라이브러리 직접 호출 | CVE → CAPEC/CWE 매핑 (병렬 HTTP, 파이프라인 내장) |
 | API | 탭별 개별 API 따로 호출 | `/g_dashboard` 한 번에 전체 반환 |
-| 진행률 | task_id 폴링 | WebSocket Push |
-| 프론트 연동 | 미연동 | REST API + WebSocket |
+| 진행률 | task_id 폴링 | WebSocket Push (Redis Pub/Sub) |
+| 프론트 연동 | 미연동 (더미 데이터) | REST API + WebSocket |
 | 배포 | RabbitMQ/Redis만 docker-compose, 서버는 로컬 | Docker Compose 전체 서비스(5개) |
 | LLM | 없음 | Ollama (Celery 파이프라인 내 자동 호출) |
 
@@ -103,7 +109,7 @@ Celery Worker (비동기)
 |---|---|---|
 | Backend | ![FastAPI](https://img.shields.io/badge/FastAPI-서버_2개-009688?logo=fastapi&logoColor=white) ![Celery](https://img.shields.io/badge/Celery-RabbitMQ-37814A?logo=celery&logoColor=white) ![Redis](https://img.shields.io/badge/Redis-Cache-DC382D?logo=redis&logoColor=white) ![RabbitMQ](https://img.shields.io/badge/RabbitMQ-Broker-FF6600?logo=rabbitmq&logoColor=white) | ![FastAPI](https://img.shields.io/badge/FastAPI-2.0-009688?logo=fastapi&logoColor=white) ![Celery](https://img.shields.io/badge/Celery-5.4-37814A?logo=celery&logoColor=white) ![Redis](https://img.shields.io/badge/Redis-7-DC382D?logo=redis&logoColor=white) |
 | Frontend | ![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black) (더미 데이터) | ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black) ![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript&logoColor=white) ![Vite](https://img.shields.io/badge/Vite-6-646CFF?logo=vite&logoColor=white) |
-| Security | ![Syft](https://img.shields.io/badge/Syft-SBOM-4B275F) ![Trivy](https://img.shields.io/badge/Trivy-SCA-1904DA) ![YARA](https://img.shields.io/badge/YARA-Malware-EE3124) | ![Syft](https://img.shields.io/badge/Syft-SBOM-4B275F) ![Trivy](https://img.shields.io/badge/Trivy-SCA-1904DA) ![YARA](https://img.shields.io/badge/YARA-Malware-EE3124) ![Ollama](https://img.shields.io/badge/Ollama-LLM_SAST-000000) |
+| Security | ![Syft](https://img.shields.io/badge/Syft-SBOM-4B275F) ![Trivy](https://img.shields.io/badge/Trivy-SCA-1904DA) ![YARA](https://img.shields.io/badge/YARA-Malware-EE3124) ![MITRE](https://img.shields.io/badge/MITRE-ATT%26CK-ED1C24) | ![Syft](https://img.shields.io/badge/Syft-SBOM-4B275F) ![Trivy](https://img.shields.io/badge/Trivy-SCA-1904DA) ![YARA](https://img.shields.io/badge/YARA-Malware-EE3124) ![MITRE](https://img.shields.io/badge/MITRE-ATT%26CK-ED1C24) ![Ollama](https://img.shields.io/badge/Ollama-LLM_SAST-000000) |
 | Infra | ![RabbitMQ](https://img.shields.io/badge/RabbitMQ-Broker-FF6600?logo=rabbitmq&logoColor=white) | ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white) ![WebSocket](https://img.shields.io/badge/WebSocket-Real_Time-010101) |
 
 <br>
