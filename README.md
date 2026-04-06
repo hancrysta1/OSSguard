@@ -88,6 +88,90 @@
 
 <br>
 
+## 분석 파이프라인 상세
+
+각 단계가 **무엇을 탐지하고, 왜 필요한지** 설명한다.
+
+### 1. SBOM 생성 (Syft)
+
+**Software Bill of Materials** — 프로젝트에 포함된 모든 오픈소스 패키지의 이름, 버전, 라이선스를 목록화한다.
+
+- 출력 포맷: SPDX JSON
+- 공급망 가시성 확보의 첫 단계. SBOM이 없으면 "어떤 패키지가 들어있는지"조차 알 수 없다.
+
+### 2. SCA — 취약점 분석 (Trivy)
+
+**Software Composition Analysis** — SBOM을 기반으로 각 패키지의 알려진 취약점(CVE)을 NVD/OSV 데이터베이스에서 조회한다.
+
+- 심각도 분류: CRITICAL / HIGH / MEDIUM / LOW / UNKNOWN
+- 패치 가능한 버전이 있으면 업데이트 권고 목록 자동 생성
+
+### 3. MITRE ATT&CK 매핑
+
+발견된 CVE를 실제 공격 기법과 연결한다. CVE 번호만으로는 "어떤 종류의 공격인지" 파악하기 어렵기 때문에, CAPEC(공격 패턴) 및 CWE(취약점 유형)를 매핑하여 위협의 성격을 명확히 한다.
+
+- 예: `CVE-2023-XXXX` → CWE-79 (XSS) → CAPEC-86 (Cross-Site Scripting)
+- 보안팀이 우선순위를 정할 때 "이 CVE가 실제로 어떤 공격 시나리오에 해당하는지" 판단하는 근거가 된다.
+
+### 4. 악성코드 탐지 (YARA + 키워드 + LLM 2단계)
+
+소스코드에서 악의적 행위를 탐지한다. **2단계 구조**로 오탐을 최소화한다.
+
+**1차 — 정적 분석 (키워드 + YARA)**
+- 위험 함수 탐지: `exec()`, `eval()`, `subprocess.Popen()`, `os.system()`
+- 난독화 패턴: `base64`, `zlib` 인코딩 사용 여부
+- 하드코딩된 시크릿: `API_KEY`, `SECRET_KEY` 패턴 매칭
+- YARA 룰 13개: APT 시그니처, PyPI 악성 패턴, PowerShell 페이로드 등
+- 의심 파일명: `setup.py`, `install.py` 등 설치 시 자동 실행되는 파일
+
+**2차 — LLM 오탐 필터링 (Ollama)**
+- 1차에서 플래그된 코드를 LLM에 전달하여 "테스트 코드의 더미 키인지, 실제 악성인지" 재판단
+- `SECRET_KEY="test"` 같은 개발용 설정을 오탐에서 제거
+- `ThreadPoolExecutor(4)` 병렬 호출로 속도 유지
+
+### 5. 타이포스쿼팅 탐지 (4종 알고리즘)
+
+공격자가 인기 패키지와 **이름이 비슷한 악성 패키지**를 등록하여, 개발자의 오타를 노리는 공격을 탐지한다.
+
+비교 대상: PyPI/npm 인기 패키지 100+개
+
+| 알고리즘 | 탐지 대상 | 예시 |
+|----------|----------|------|
+| Char Insertion | 글자 1개 추가/삭제 | `browser-cookies3` → `browser-cookie3` |
+| Char Swap | 인접 글자 순서 변경 | `djnago` → `django` |
+| Levenshtein Distance | 편집 거리 1~2 이내 | `reqeusts` → `requests` |
+| SequenceMatcher | 전체 유사도 85% 이상 | `python-dateutils` → `python-dateutil` |
+
+하나라도 걸리면 의심 패키지로 플래그. 설치 전 사전 검사(`/pypi-npm/pre-check`)에서도 동일 로직을 사용하여 **설치 자체를 차단**할 수 있다.
+
+### 6. 디펜던시 컨퓨전 탐지
+
+기업 내부 패키지 이름과 동일한 이름의 패키지가 **공개 레지스트리(PyPI/npm)**에 등록되어 있을 때, 빌드 시스템이 외부 패키지를 우선 설치하는 공격을 탐지한다.
+
+- `internal_deps.txt`에 정의된 내부 패키지 목록과 배포자(distributor)를 대조
+- 패키지명에 `internal`, `corp`, `private` 등 내부 키워드가 포함되어 있으면서 배포자가 신뢰 목록(Official, PyPI, InternalRepo)에 없으면 위험 플래그
+
+### 7. AI 위험도 점수 (Risk Scoring)
+
+전체 분석 결과를 종합하여 **0~100점 위험도 점수**를 산출한다.
+
+| 항목 | 배점 | 기준 |
+|------|------|------|
+| CVE 취약점 | 최대 60점 | CRITICAL ×15, HIGH ×8, MEDIUM ×3, LOW ×1 |
+| 타이포스쿼팅 | 최대 15점 | 탐지 건당 5점 |
+| 디펜던시 컨퓨전 | 최대 15점 | 탐지 건당 5점 |
+| 악성코드 + YARA | 최대 10점 | 위험함수 2점, 난독화 1점, 시크릿 1점, YARA 히트 2점 |
+
+| 점수 | 등급 | 대응 |
+|------|------|------|
+| 70~100 | CRITICAL | 즉시 대응 필요 |
+| 50~69 | HIGH | 조속한 대응 권장 |
+| 30~49 | MEDIUM | 계획적 패치 필요 |
+| 10~29 | LOW | 모니터링 유지 |
+| 0~9 | SAFE | 심각한 위험 없음 |
+
+<br>
+
 ## What is different?
 
 ### 원본
