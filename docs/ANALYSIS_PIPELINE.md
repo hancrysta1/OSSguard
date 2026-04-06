@@ -2,6 +2,8 @@
 
 > 각 단계가 **무엇을 탐지하고, 왜 필요한지** 설명한다.
 
+- 원본 파이프라인 설계 문서 : https://thunder-banon-a5e.notion.site/196f7776fc46806fa281d46ad50b54b2?pvs=74
+
 ```
 Clone → SBOM → SCA → MITRE 매핑 → 악성코드(YARA+LLM) → 타이포스쿼팅 → 디펜던시 컨퓨전 → AI 위험도
 ```
