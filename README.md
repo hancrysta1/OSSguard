@@ -110,9 +110,11 @@
 - 깃허브 링크 : [github.com/TrustBOM](https://github.com/TrustBOM)
 - GitHub 분석(:8000), PyPI/npm 분석(:8001) FastAPI 서버를 각각 uvicorn으로 실행
 - Celery 워커도 2개 분리 (github_tasks/github_vhost, pypi_npm_tasks/pypi_npm_vhost)
-- docker-compose에는 RabbitMQ, Redis만 포함. 서버와 Celery 워커는 로컬 실행
 - MITRE ATT&CK 매핑 (mitreapi 라이브러리 직접 호출)
+- CI/CD: Jenkins (Docker 컨테이너) + GitHub SSH 연동
+- 배포: NCP (네이버 클라우드, Ubuntu 4GB) + Nginx (SSL 리버스 프록시) + Docker Compose
 - 프론트엔드 배포: Vercel (ossguard.vercel.app)
+- 배포 관련 글: [Docker Compose와 Jenkins로 CI/CD하기](https://velog.io/@hansjour/Docker-Compose%EC%99%80-Jenkins%EB%A1%9C-CICD%ED%95%98%EA%B8%B0)
 
 
 
@@ -143,7 +145,8 @@
 | API | 탭별 개별 API 따로 호출 | `/g_dashboard` 한 번에 전체 반환 |
 | 진행률 | task_id 폴링 | WebSocket Push (Redis Pub/Sub) |
 | 프론트 연동 | 미연동 (더미 데이터) | REST API + WebSocket |
-| 배포 | RabbitMQ/Redis만 docker-compose, 서버는 로컬 | Docker Compose 전체 서비스(5개) |
+| CI/CD | Jenkins (NCP 서버에서 Docker 컨테이너로 실행) | — |
+| 배포 | NCP + Nginx(SSL) + Docker Compose + Vercel(프론트) | Docker Compose 전체 서비스(5개) |
 | LLM | 없음 | Ollama (Celery 파이프라인 내 자동 호출) |
 
 <br>
@@ -155,7 +158,7 @@
 | Backend | ![FastAPI](https://img.shields.io/badge/FastAPI-서버_2개-009688?logo=fastapi&logoColor=white) ![Celery](https://img.shields.io/badge/Celery-RabbitMQ-37814A?logo=celery&logoColor=white) ![Redis](https://img.shields.io/badge/Redis-Cache-DC382D?logo=redis&logoColor=white) ![RabbitMQ](https://img.shields.io/badge/RabbitMQ-Broker-FF6600?logo=rabbitmq&logoColor=white) | ![FastAPI](https://img.shields.io/badge/FastAPI-2.0-009688?logo=fastapi&logoColor=white) ![Celery](https://img.shields.io/badge/Celery-5.4-37814A?logo=celery&logoColor=white) ![Redis](https://img.shields.io/badge/Redis-7-DC382D?logo=redis&logoColor=white) |
 | Frontend | ![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black) (더미 데이터) | ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black) ![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript&logoColor=white) ![Vite](https://img.shields.io/badge/Vite-6-646CFF?logo=vite&logoColor=white) |
 | Security | ![Syft](https://img.shields.io/badge/Syft-SBOM-4B275F) ![Trivy](https://img.shields.io/badge/Trivy-SCA-1904DA) ![YARA](https://img.shields.io/badge/YARA-Malware-EE3124) ![MITRE](https://img.shields.io/badge/MITRE-ATT%26CK-ED1C24) | ![Syft](https://img.shields.io/badge/Syft-SBOM-4B275F) ![Trivy](https://img.shields.io/badge/Trivy-SCA-1904DA) ![YARA](https://img.shields.io/badge/YARA-Malware-EE3124) ![MITRE](https://img.shields.io/badge/MITRE-ATT%26CK-ED1C24) ![Ollama](https://img.shields.io/badge/Ollama-LLM_SAST-000000) |
-| Infra | ![RabbitMQ](https://img.shields.io/badge/RabbitMQ-Broker-FF6600?logo=rabbitmq&logoColor=white) | ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white) ![WebSocket](https://img.shields.io/badge/WebSocket-Real_Time-010101) |
+| Infra | ![NCP](https://img.shields.io/badge/NCP-Naver_Cloud-03C75A?logo=naver&logoColor=white) ![Jenkins](https://img.shields.io/badge/Jenkins-CI%2FCD-D24939?logo=jenkins&logoColor=white) ![Nginx](https://img.shields.io/badge/Nginx-Reverse_Proxy-009639?logo=nginx&logoColor=white) ![RabbitMQ](https://img.shields.io/badge/RabbitMQ-Broker-FF6600?logo=rabbitmq&logoColor=white) ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white) | ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white) ![WebSocket](https://img.shields.io/badge/WebSocket-Real_Time-010101) |
 
 <br>
 
