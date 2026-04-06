@@ -71,8 +71,8 @@
 │  │   ↓                      │                     │                  │
 │  │  AI 위험도 분석           │     ┌───────────────┘                  │
 │  │   │                      │     │                                  │
-│  │   ├── ⑤ 각 단계마다 ──────────▶ Redis [Pub/Sub] 진행률 Publish   │
-│  │   └── ⑦ 완료 시 ─────────────▶ Redis [캐시]    결과 저장         │
+│  │   ├── ⑤ 단계 시작/완료마다 ────▶ Redis [Pub/Sub] 진행률 실시간 Publish │
+│  │   └── ⑦ 전체 완료 시 ────────▶ Redis [캐시]    결과 저장             │
 │  │                          │                                        │
 │  └──────────────────────────┘                                        │
 │                                                                      │
@@ -91,7 +91,7 @@
 ② FastAPI → Redis [브로커] : Celery 태스크 발행
 ③ Redis [브로커] → Worker : 태스크 수신, 분석 파이프라인 시작
 ④ Worker → Ollama : 악성코드 1차 탐지 후 LLM 2차 판단 요청 (오탐 필터링)
-⑤ Worker → Redis [Pub/Sub] : 각 단계 완료 시 진행률 Publish
+⑤ Worker → Redis [Pub/Sub] : 각 단계 시작/완료마다 진행률 실시간 Publish
 ⑥ Redis [Pub/Sub] → FastAPI(/ws) → Browser : FastAPI가 Pub/Sub 메시지를 수신하여 WebSocket으로 Browser에 중계
 ⑦ Worker → Redis [캐시] : 분석 완료 시 결과 저장
 ⑧ Browser → FastAPI → Redis [캐시] : 대시보드에서 캐시된 분석 결과 조회
@@ -202,12 +202,13 @@
 
 ## 기술적 의사결정 & 트러블슈팅
 
-### Docker Compose 도입
+### 아키텍처 의사결정 (Celery · Redis · Docker Compose)
+> [ARCHITECTURE_DECISIONS.md](docs/ARCHITECTURE_DECISIONS.md)
 
-- 원본은 RabbitMQ/Redis만 docker-compose이고, FastAPI 서버 2개와 Celery 워커 2개는 각각 터미널에서 로컬 실행하는 구조였다.
-- 리팩토링 후 서비스가 5개(Backend, Worker, Redis, Ollama, Frontend)로 구성되는데, Redis가 먼저 기동되어야 Backend와 Worker가 정상 동작하는 등 **서비스 간 의존성**이 존재한다.
-- Docker Compose의 `depends_on` + `healthcheck`를 활용하여 Redis 준비 완료 → Backend/Worker 시작 순서를 보장하고, `docker-compose up -d` 한 줄로 전체를 실행할 수 있도록 하였다.
-- 모놀리식 구조로 Backend와 Worker는 동일한 코드베이스(`backend/`)를 공유하며, 컨테이너 분리는 프로세스 역할(HTTP 서빙 vs 비동기 작업)을 나누기 위한 것이다.
+- 보안 분석은 CPU 바운드(Trivy/YARA)와 I/O 바운드(git clone/패키지 설치/LLM 호출)가 혼재되어 있어, FastAPI에서 동기 처리하면 응답 지연과 GIL 병목이 발생하였다.
+- Celery 워커를 별도 프로세스로 분리하여 분석을 백그라운드에서 수행하고, FastAPI는 task_id 즉시 반환에 집중하도록 구조를 설계하였다.
+- RabbitMQ를 제거하고 Redis 1개로 브로커 + 캐시 + Pub/Sub 3가지 역할을 통합하여 인프라를 단순화하였다.
+- 5개 서비스 간 의존성(Redis → Backend/Worker → Frontend)을 Docker Compose의 `depends_on` + `healthcheck`로 실행 순서를 보장하였다.
 
 ### 타이포스쿼팅 탐지 고도화
 > [SECURITY_ENHANCEMENT.md](docs/SECURITY_ENHANCEMENT.md)
