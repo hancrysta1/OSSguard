@@ -22,80 +22,8 @@
 
 > **모놀리식 아키텍처** — FastAPI + Celery가 하나의 코드베이스(`backend/`)를 공유한다. Redis → Backend → Worker 순으로 서비스 간 의존성이 있어 실행 순서 보장이 필요하므로, Docker Compose로 `depends_on` + `healthcheck` 기반 순서 실행을 구성하였다.
 
-```
-┌─────────────────────┐
-│  Browser (React 19) │
-└──┬──────────────┬───┘
-   │              │
-   │ ① REST       │ ⑦ WebSocket
-   │ (분석 요청)   │ (실시간 진행률)
-   ▼              │
-┌──────────────────────────────────────────────────────────────────────┐
-│                  Docker Compose (모놀리식 컨테이너 배포)               │
-│                                                                      │
-│  ┌──────────────────────────┐                                        │
-│  │ Frontend (Nginx :3000)   │ ── React 정적 파일 서빙                 │
-│  └──────────────────────────┘                                        │
-│                                                                      │
-│  ┌──────────────────────────┐     ┌────────────────────────────────┐ │
-│  │ Backend (FastAPI :8000)  │     │ Redis :6379 (3가지 역할)       │ │
-│  │                          │     │                                │ │
-│  │  /github  (저장소 분석)   │ ②──▶│ [브로커] Celery 태스크 큐      │ │
-│  │  /pypi-npm (패키지 분석)  │     │                                │ │
-│  │  /ai      (AI 분석)      │ ⑧◀──│ [캐시]  분석 결과 저장소       │ │
-│  │  /ws      (WebSocket)    │ ⑥◀──│ [Pub/Sub] 진행률 수신 → 중계   │ │
-│  │                          │     │                                │ │
-│  └──────────────────────────┘     └───┬───────────┬────────────────┘ │
-│                                       │           │                  │
-│                                   ③ 태스크 수신   │                  │
-│                                    (브로커)        │                  │
-│                                       ▼           │                  │
-│  ┌──────────────────────────┐         │           │                  │
-│  │ Worker (Celery ×4)       │ ◀───────┘           │                  │
-│  │                          │                     │                  │
-│  │  Clone (git clone)       │                     │                  │
-│  │   ↓                      │                     │                  │
-│  │  SBOM (Syft)             │                     │                  │
-│  │   ↓                      │                     │                  │
-│  │  SCA (Trivy)             │  ┌────────────────┐ │                  │
-│  │   ↓                      │  │ Ollama :11434  │ │                  │
-│  │  MITRE ATT&CK (HTTP API) │  │ (LLM 서비스)   │ │                  │
-│  │   ↓                      │  └───────┬────────┘ │                  │
-│  │  악성코드 (YARA + 키워드) │          │          │                  │
-│  │   ↓                      │  ④ LLM 호출         │                  │
-│  │  LLM 2차 판단 ──────────────────────┘          │                  │
-│  │   ↓                      │                     │                  │
-│  │  타이포스쿼팅 (4종 알고리즘)                     │                  │
-│  │   ↓                      │                     │                  │
-│  │  디펜던시 컨퓨전 (내부 패키지 목록 대조) │                     │                  │
-│  │   ↓                      │                     │                  │
-│  │  AI 위험도 분석           │     ┌───────────────┘                  │
-│  │   │                      │     │                                  │
-│  │   ├── ⑤ 단계 시작/완료마다 ────▶ Redis [Pub/Sub] 진행률 실시간 Publish │
-│  │   └── ⑦ 전체 완료 시 ────────▶ Redis [캐시]    결과 저장             │
-│  │                          │                                        │
-│  └──────────────────────────┘                                        │
-│                                                                      │
-└──────────────────────────────────────────────────────────────────────┘
-   │              │
-   │ ⑧ REST       │ ⑤→⑥ WebSocket Push
-   │ (대시보드)    │ (Worker → Redis Pub/Sub → FastAPI 중계 → Browser)
-   ▼              ▼
-┌─────────────────────┐
-│  Browser (React 19) │
-│  대시보드 렌더링      │
-└─────────────────────┘
+<img width="900" height="1940" alt="image" src="https://github.com/user-attachments/assets/b9c92c6e-9836-492d-93de-d8311892f640" />
 
-[흐름 요약]
-① Browser → FastAPI : REST API로 분석 요청 (GitHub URL 또는 패키지명)
-② FastAPI → Redis [브로커] : Celery 태스크 발행
-③ Redis [브로커] → Worker : 태스크 수신, 분석 파이프라인 시작
-④ Worker → Ollama : 악성코드 1차 탐지 후 LLM 2차 판단 요청 (오탐 필터링)
-⑤ Worker → Redis [Pub/Sub] : 각 단계 시작/완료마다 진행률 실시간 Publish
-⑥ Redis [Pub/Sub] → FastAPI(/ws) → Browser : FastAPI가 Pub/Sub 메시지를 수신하여 WebSocket으로 Browser에 중계
-⑦ Worker → Redis [캐시] : 분석 완료 시 결과 저장
-⑧ Browser → FastAPI → Redis [캐시] : 대시보드에서 캐시된 분석 결과 조회
-```
 
 <br>
 
@@ -156,7 +84,7 @@
 | MITRE ATT&CK | mitreapi 라이브러리 직접 호출 | CVE → CAPEC/CWE 매핑 (병렬 HTTP, 파이프라인 내장) |
 | API | 탭별 개별 API 따로 호출 | `/g_dashboard` 한 번에 전체 반환 |
 | 진행률 | task_id 폴링 | WebSocket Push (Redis Pub/Sub) |
-| 프론트 연동 | 미연동 (더미 데이터) | REST API + WebSocket |
+| 프론트 연동 | REST API | REST API + WebSocket(실시간) |
 | CI/CD | Jenkins (NCP 서버에서 Docker 컨테이너로 실행) | — |
 | 배포 | NCP + Nginx(SSL) + Docker Compose + Vercel(프론트) | Docker Compose 전체 서비스(5개) |
 | LLM | 없음 | Ollama (Celery 파이프라인 내 자동 호출) |
