@@ -20,6 +20,8 @@
 
 ## 서비스 아키텍처
 
+> **모놀리식 아키텍처** — FastAPI + Celery가 하나의 코드베이스(`backend/`)를 공유한다. Redis → Backend → Worker 순으로 서비스 간 의존성이 있어 실행 순서 보장이 필요하므로, Docker Compose로 `depends_on` + `healthcheck` 기반 순서 실행을 구성하였다.
+
 ```
 ┌─────────────────────┐
 │  Browser (React 19) │
@@ -27,14 +29,14 @@
          │ ① REST API 요청 (분석 시작)
          ▼
 ┌──────────────────────────────────────────────────────────────────┐
-│                     Docker Compose Cluster                       │
+│              Docker Compose (모놀리식 컨테이너 배포)               │
 │                                                                  │
 │  ┌─────────────────────────────────┐                             │
 │  │  Frontend (Nginx :3000)         │ ── 정적 파일 서빙            │
 │  └─────────────────────────────────┘                             │
 │                                                                  │
 │  ┌─────────────────────────────────┐      ┌───────────────────┐  │
-│  │  API Gateway (FastAPI :8000)    │      │  Redis :6379      │  │
+│  │  Backend (FastAPI :8000)        │      │  Redis :6379      │  │
 │  │    ├── /github   (저장소 분석)   │ ──②──▶ Celery 태스크 발행 │  │
 │  │    ├── /pypi-npm (패키지 분석)   │      │  (메시지 브로커)   │  │
 │  │    ├── /ai       (AI 분석)      │      │                   │  │
@@ -78,11 +80,11 @@
 │  대시보드 렌더링      │
 └─────────────────────┘
 
-① 사용자가 GitHub URL 또는 패키지명 입력 → API Gateway로 REST 요청
-② API Gateway가 Celery 태스크를 Redis 브로커에 발행
+① 사용자가 GitHub URL 또는 패키지명 입력 → FastAPI 서버로 REST 요청
+② FastAPI가 Celery 태스크를 Redis 브로커에 발행
 ③ Worker가 Redis에서 태스크를 수신하여 분석 파이프라인 실행
 ④ 악성코드 탐지 시 Ollama LLM에 2차 판단 요청 (오탐 필터링)
-⑤ 각 단계 완료 시 Redis Pub/Sub → API Gateway → WebSocket으로 진행률 Push
+⑤ 각 단계 완료 시 Redis Pub/Sub → FastAPI → WebSocket으로 진행률 Push
 ⑥ 분석 완료 후 결과를 Redis에 캐시 → 대시보드에서 조회
 ```
 
@@ -138,6 +140,7 @@
 
 | | Before | After |
 |---|---|---|
+| 아키텍처 | 모놀리식 (서버 2개 + 워커 2개를 로컬에서 개별 실행) | 모놀리식 (1코드베이스, Docker Compose로 컨테이너 배포) |
 | 서버 | FastAPI 2개 (GitHub :8000, PyPI/npm :8001) | FastAPI 1개 (라우터로 분리) |
 | Celery | 워커 2개 분리 (github_queue, pypi_npm_queue) | 워커 1개 (통합 파이프라인, concurrency=4) |
 | 브로커 | RabbitMQ (vhost 분리: github_vhost, pypi_npm_vhost) | Redis (브로커 + 캐시 + Pub/Sub 통합) |
@@ -190,6 +193,13 @@
 
 ## 기술적 의사결정 & 트러블슈팅
 
+### Docker Compose 도입
+
+- 원본은 RabbitMQ/Redis만 docker-compose이고, FastAPI 서버 2개와 Celery 워커 2개는 각각 터미널에서 로컬 실행하는 구조였다.
+- 리팩토링 후 서비스가 5개(Backend, Worker, Redis, Ollama, Frontend)로 구성되는데, Redis가 먼저 기동되어야 Backend와 Worker가 정상 동작하는 등 **서비스 간 의존성**이 존재한다.
+- Docker Compose의 `depends_on` + `healthcheck`를 활용하여 Redis 준비 완료 → Backend/Worker 시작 순서를 보장하고, `docker-compose up -d` 한 줄로 전체를 실행할 수 있도록 하였다.
+- 모놀리식 구조로 Backend와 Worker는 동일한 코드베이스(`backend/`)를 공유하며, 컨테이너 분리는 프로세스 역할(HTTP 서빙 vs 비동기 작업)을 나누기 위한 것이다.
+
 ### 타이포스쿼팅 탐지 고도화
 > [SECURITY_ENHANCEMENT.md](docs/SECURITY_ENHANCEMENT.md)
 
@@ -239,7 +249,7 @@ docker exec ossguard-ollama-1 ollama pull llama3.2:1b
 | 서비스 | 포트 | 설명 |
 |--------|------|------|
 | Frontend | http://localhost:3000 | React 대시보드 |
-| API Gateway | http://localhost:8000 | FastAPI 서버 |
+| Backend | http://localhost:8000 | FastAPI 서버 |
 | Ollama | http://localhost:11434 | LLM 서비스 |
 
 ### 환경변수
