@@ -36,56 +36,91 @@ async def get_store_status(task_id: str):
 
 @router.get("/dashboard/{package_name}")
 async def get_dashboard(package_name: str):
-    # Fix: try both key patterns for backwards compatibility
+    """PyPI/npm 분석 결과를 GitHub g_dashboard와 동일한 구조로 반환."""
     cached_data = redis_client.get(f"store_task:{package_name}")
     if not cached_data:
-        # Try finding by scanning recent task keys
         raise HTTPException(status_code=404, detail="Analysis data not found")
 
     try:
         raw_data = json.loads(cached_data)
         result_data = raw_data if "sbom" in raw_data else raw_data.get("result", {})
 
-        sca_results = result_data.get("sca", {}).get("Results", [])
-        vulnerabilities = []
-        if sca_results:
-            vulnerabilities = sca_results[0].get("Vulnerabilities", [])
+        # --- packages ---
+        package_list = []
+        for pkg in result_data.get("sbom", {}).get("sbom_data", {}).get("packages", []):
+            if pkg.get("name") and pkg.get("versionInfo"):
+                package_list.append({
+                    "package_name": pkg.get("name"),
+                    "version": pkg.get("versionInfo"),
+                    "license": pkg.get("licenseDeclared", "NOASSERTION"),
+                    "download_link": pkg.get("downloadLocation", "N/A"),
+                })
+
+        # --- vulnerabilities ---
+        all_vulns = []
+        for sca_result in result_data.get("sca", {}).get("Results", []):
+            for v in sca_result.get("Vulnerabilities", []):
+                all_vulns.append({
+                    "cve_id": v.get("VulnerabilityID", "N/A"),
+                    "package": v.get("PkgName", "N/A"),
+                    "installed_version": v.get("InstalledVersion", "N/A"),
+                    "fixed_version": v.get("FixedVersion", "N/A"),
+                    "severity": v.get("Severity", "UNKNOWN"),
+                    "description": v.get("Description", ""),
+                })
+
+        # --- severity distribution ---
+        severity_count = {"CRITICAL": 0, "HIGH": 0, "MEDIUM": 0, "LOW": 0, "UNKNOWN": 0}
+        for v in all_vulns:
+            sev = v["severity"].upper()
+            if sev in severity_count:
+                severity_count[sev] += 1
+
+        # --- malicious code ---
+        formatted_malicious = []
+        for entry in result_data.get("malicious_code", []):
+            if not isinstance(entry, dict):
+                continue
+            rd = entry.get("result", entry)
+            formatted_malicious.append({
+                "file": entry.get("file", "Unknown"),
+                "dangerous_functions": rd.get("dangerous_functions", []),
+                "dangerous_functions_lines": rd.get("dangerous_functions_lines", {}),
+                "obfuscation_detected": rd.get("obfuscation_detected", False),
+                "hardcoded_api_keys": rd.get("hardcoded_api_keys", False),
+                "llm_verdict": entry.get("llm_verdict"),
+            })
+
+        # --- top vulnerabilities (상위 3개) ---
+        severity_order = {"CRITICAL": 4, "HIGH": 3, "MEDIUM": 2, "LOW": 1, "UNKNOWN": 0}
+        top_vulns = sorted(all_vulns, key=lambda x: severity_order.get(x["severity"], 0), reverse=True)[:3]
 
         return {
-            "status": raw_data.get("status", "SUCCESS"),
-            "result": {
-                "success": result_data.get("success", True),
-                "package": result_data.get("package", package_name),
-                "sbom": {
-                    "packages": [
-                        {
-                            "name": pkg.get("name"),
-                            "version": pkg.get("versionInfo"),
-                            "license": pkg.get("licenseDeclared"),
-                            "download_location": pkg.get("downloadLocation"),
-                        }
-                        for pkg in result_data.get("sbom", {}).get("sbom_data", {}).get("packages", [])
-                        if pkg.get("name") and pkg.get("versionInfo")
-                    ],
-                },
-                "sca": {
-                    "total_vulnerabilities": len(vulnerabilities),
-                    "vulnerabilities": [
-                        {
-                            "cve_id": v.get("VulnerabilityID"),
-                            "package": v.get("PkgName"),
-                            "installed_version": v.get("InstalledVersion"),
-                            "fixed_version": v.get("FixedVersion"),
-                            "severity": v.get("Severity"),
-                            "description": v.get("Description"),
-                        }
-                        for v in vulnerabilities
-                    ],
-                },
-                "malicious_code": result_data.get("malicious_code", {}),
-                "typosquatting": result_data.get("typosquatting", []),
-                "dependency_confusion": result_data.get("dependency_confusion", []),
+            "repository": package_name,
+            "repository_url": "",
+            "analysis_date": raw_data.get("analysis_date", ""),
+            "security_overview": {
+                "title": "보안 분석 개요",
+                "total_vulnerabilities": len(all_vulns),
+                "missing_packages_count": 0,
+                "recommended_updates_count": 0,
+                "affected_packages_count": len({v["package"] for v in all_vulns}),
             },
+            "severity_distribution": [
+                {"level": level, "count": severity_count.get(level, 0)}
+                for level in ["CRITICAL", "HIGH", "MEDIUM", "LOW", "UNKNOWN"]
+            ],
+            "top_vulnerabilities": top_vulns,
+            "packages": package_list,
+            "package_count": len(package_list),
+            "vulnerabilities": all_vulns,
+            "vulnerability_count": len(all_vulns),
+            "malicious_code_analysis": formatted_malicious,
+            "yara_analysis": [],
+            "typosquatting_results": result_data.get("typosquatting", []) or [{"message": "No typosquatting detected"}],
+            "dependency_confusion_results": result_data.get("dependency_confusion", []) or [{"message": "No dependency confusion detected"}],
+            "updates": [],
+            "update_recommendations_count": 0,
         }
     except json.JSONDecodeError:
         raise HTTPException(status_code=500, detail="Error parsing stored data")

@@ -2,9 +2,9 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies + Node.js (npm 패키지 설치용)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    git curl wget && \
+    git curl wget nodejs npm && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Syft (SBOM generator)
