@@ -59,7 +59,7 @@ Clone → SBOM → SCA → CVE 분류 매핑(CAPEC/CWE) → 악성코드(YARA+LL
 | 위험 함수 | `exec()`, `eval()`, `subprocess.Popen()`, `os.system()` | 동적 코드 실행, 시스템 명령어 호출 |
 | 난독화 패턴 | `base64`, `zlib` | 페이로드 인코딩으로 코드 은닉 시도 |
 | 하드코딩 시크릿 | `API_KEY`, `SECRET_KEY` 패턴 | 코드에 직접 포함된 인증 정보 |
-| YARA 룰 (13개) | APT 시그니처, PyPI 악성 패턴, PowerShell 페이로드 등 | 알려진 악성코드 패턴 매칭 |
+| YARA 룰 파일 (12개) | APT 시그니처, PyPI 악성 패턴, PowerShell 페이로드 등 | 알려진 악성코드 패턴 매칭 |
 | 의심 파일명 | `setup.py`, `install.py`, `bootstrap.py` 등 | 설치 시 자동 실행되는 파일 |
 
 - YARA 룰은 디렉토리 스캔 시 **한 번만 컴파일**하여 파일별 반복 컴파일을 방지 (200회 → 1회)
@@ -104,7 +104,9 @@ Clone → SBOM → SCA → CVE 분류 매핑(CAPEC/CWE) → 악성코드(YARA+LL
 
 `browser-cookies3` — PyPI에 196회 다운로드된 악성 패키지. 비밀번호와 Discord 토큰을 탈취하는 코드가 포함되어 있었으나, 기존 로직(SequenceMatcher 1개 + 패키지 10개)으로는 탐지하지 못했다. 4종 알고리즘 적용 후 Char Insertion 알고리즘으로 탐지 성공.
 
-**성과**: Recall 50% → 91.7%, F1 Score 66.7% → 95.7%
+**성과**: Recall 50% → 100%, F1 Score 66.7% → 100% (표본 28개 — 악성 12 / 정상 16, Precision 100% 유지)
+
+> 한계: 같은 캠페인의 접미사형(`coloramapkgs`, `readmecolorama` 등 6개)은 오타가 아니라 브랜드명 뒤에 말을 붙이는 유형이라 현재 규칙으로 탐지되지 않는다.
 
 **구현**: `backend/app/services/typosquatting.py`
 

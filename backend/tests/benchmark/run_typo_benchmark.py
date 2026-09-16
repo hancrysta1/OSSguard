@@ -38,8 +38,8 @@ from app.services.typosquatting import detect_typosquatting as detect_after  # n
 
 CASES = [
     # ─── 실제 사건 기반 ───
-    ("browser-cookies3",  True,  "browser-cookie3",  "2026 Socket.dev 발견, 196회 다운로드"),
-    ("colorizr",          True,  "colorama",         "2024 Checkmarx 발견, colorama 타이포"),
+    ("browser-cookies3",  True,  "browser-cookie3",  "2024.10 Socket 발견, 196회 다운로드"),
+    ("coloraiz",          True,  "colorama",         "2025.05 Checkmarx 발견, colorama 이름 혼동 캠페인"),
 
     # ─── 글자 1개 추가/삭제 (insertion) ───
     ("requestss",         True,  "requests",         "s 하나 추가"),
@@ -73,6 +73,7 @@ CASES = [
     ("uvicorn",           False, None,               "정상 패키지"),
     ("torch",             False, None,               "정상 패키지"),
     ("axios",             False, None,               "정상 패키지"),
+    ("colorizr",          False, None,               "npm 정상 패키지 — 위 캠페인이 이름만 도용"),
 ]
 
 

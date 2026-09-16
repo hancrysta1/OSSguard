@@ -12,22 +12,21 @@ import pytest
 from app.services.typosquatting import detect_typosquatting
 
 # ─── 기준값 ───────────────────────────────────────────────
-# 현재 값은 재현율 91.7%(12개 중 11개), 정밀도 100%.
-# 재현율은 한 건 더 놓치면(10/12 = 83.3%) 실패하도록 90%로 잡았고,
+# 현재 값은 재현율 100%(12개 전부), 정밀도 100%.
+# 표본 안에서는 한 건도 놓치지 않는 상태이므로 재현율을 100%로 고정하고,
 # 정밀도는 정상 패키지를 하나라도 잡으면 실패하도록 100%로 고정한다.
-MIN_RECALL = 0.90
+MIN_RECALL = 1.00
 MIN_PRECISION = 1.00
 
-# 기준값을 낮추지 않기로 하고 남겨 둔 의도된 미탐.
-# `colorizr`(정식 `colorama`)는 편집 거리 3이라 네 검사 모두에 걸리지 않는다.
-# 여기 없는 이름이 새로 미탐되면 테스트가 실패한다.
-KNOWN_MISSES = {"colorizr"}
+# 의도적으로 잡지 않기로 한 이름이 있으면 여기에 적는다. 지금은 없다.
+# 여기 없는 이름이 미탐되면 테스트가 실패한다.
+KNOWN_MISSES: set[str] = set()
 
 # ─── 표본 ────────────────────────────────────────────────
 TYPO_PACKAGES = [
     # 실제 사고 사례
-    ("browser-cookies3", "2026 Socket.dev 발견, 196회 다운로드"),
-    ("colorizr", "2024 Checkmarx 발견, colorama 타이포"),
+    ("browser-cookies3", "2024.10 Socket 발견, browser-cookie3 위장, 196회 다운로드"),
+    ("coloraiz", "2025.05 Checkmarx 발견, colorama 이름 혼동 캠페인"),
     # 글자 1개 추가
     ("requestss", "s 하나 추가"),
     ("flaskk", "k 하나 추가"),
@@ -47,10 +46,21 @@ LEGIT_PACKAGES = [
     "requests", "numpy", "flask", "django", "browser-cookie3",
     "fastapi", "celery", "redis", "pytest", "boto3",
     "sqlalchemy", "pydantic", "uvicorn", "torch", "axios",
+    # colorizr 은 npm 의 정상 색상 라이브러리다. 2025 Checkmarx 캠페인이 이 이름을 미끼로
+    # 썼을 뿐 패키지 자체는 악성이 아니므로, 잡지 않는 것이 맞는 동작이다.
+    "colorizr",
 ]
 
 # 실제 공격에 쓰인 이름은 개별로도 반드시 잡혀야 한다.
-REAL_INCIDENT_PACKAGES = ["browser-cookies3"]
+REAL_INCIDENT_PACKAGES = ["browser-cookies3", "coloraiz"]
+
+# 같은 캠페인에서 쓰인 접미사형 악성 패키지. 오타가 아니라 브랜드명 뒤에 말을 붙이는 유형이라
+# 편집 거리·글자 삽입·교환 검사로는 잡히지 않는다. 지금은 못 잡는 영역이라 기준에 넣지 않고,
+# 몇 개나 잡히는지만 로그로 남겨 개선 여부를 추적한다.
+AFFIX_CAMPAIGN_PACKAGES = [
+    "colorizator", "coloramapkgs", "coloramapkgsw",
+    "coloramapkgsdow", "coloramashowtemp", "readmecolorama",
+]
 
 
 def _evaluate() -> dict:
@@ -107,6 +117,16 @@ def test_misses_do_not_grow(metrics):
     unexpected = metrics["missed"] - KNOWN_MISSES
     assert not unexpected, (
         f"알려진 미탐 외에 새로 놓친 패키지가 있습니다: {sorted(unexpected)}"
+    )
+
+
+def test_report_known_gap():
+    """접미사형 캠페인 패키지를 몇 개나 잡는지 기록한다. 실패시키지 않는 보고용."""
+    detected = [name for name in AFFIX_CAMPAIGN_PACKAGES if detect_typosquatting(name)[0]]
+    print(
+        f"\n접미사형 캠페인 표본 {len(AFFIX_CAMPAIGN_PACKAGES)}개 중 "
+        f"{len(detected)}개 탐지 (현재 규칙이 다루지 못하는 영역)"
+        f"\n  탐지: {detected or '없음'}"
     )
 
 

@@ -110,7 +110,7 @@ threshold 낮추면 → 더 잡지만 정상도 걸림 (Precision ↓)
   [TP 탐지] reqeusts                  → requests (Levenshtein ≤2)
   [TP 탐지] nunpy                     → numpy (Levenshtein ≤2)
 
-  Precision: 100.0%  Recall: 91.7%  F1: 95.7%
+  Precision: 100.0%  Recall: 100.0%  F1: 100.0%
 ```
 
 **화면 결과**
@@ -124,12 +124,14 @@ threshold 낮추면 → 더 잡지만 정상도 걸림 (Precision ↓)
 
 | 지표 | Before | After | 변화 |
 |------|--------|-------|------|
-| **Recall** | 50.0% | **91.7%** | +41.7%p |
-| **F1 Score** | 66.7% | **95.7%** | +29.0%p |
+| **Recall** | 50.0% | **100%** | +50.0%p |
+| **F1 Score** | 66.7% | **100%** | +33.3%p |
 | Precision | 100% | 100% | 유지 |
 | FP Rate | 0% | 0% | 유지 |
 
-**Precision(오탐 0%)을 유지하면서 Recall을 50% → 91.7%로 끌어올렸다.**
+**Precision(오탐 0%)을 유지하면서 Recall을 50% → 100%로 끌어올렸다.** (표본 28개 — 악성 12 / 정상 16)
+
+다만 같은 캠페인의 접미사형 악성 패키지(`colorizator`, `coloramapkgs`, `readmecolorama` 등 6개)는 오타가 아니라 브랜드명 뒤에 말을 붙이는 유형이라 현재 4종 알고리즘으로는 한 건도 탐지되지 않는다. 별도 규칙이 필요한 영역이다.
 
 ---
 
@@ -602,8 +604,8 @@ python3 tests/benchmark/run_typo_benchmark.py
 
 | 영역 | 지표 | Before | After |
 |------|------|--------|-------|
-| 타이포스쿼팅 | Recall | 50.0% | **91.7%** |
-| 타이포스쿼팅 | F1 Score | 66.7% | **95.7%** |
+| 타이포스쿼팅 | Recall | 50.0% | **100%** |
+| 타이포스쿼팅 | F1 Score | 66.7% | **100%** |
 | 악성코드 탐지 (SAST) | FP Rate | 20.0% | **10.0%** |
 | 악성코드 탐지 (SAST) | Precision | 83.3% | **90.9%** |
 | 악성코드 탐지 (SAST) | F1 Score | 90.9% | **95.2%** |
