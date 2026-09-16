@@ -30,6 +30,8 @@ OFFICIAL_PACKAGES = {
     "mongoose", "sequelize", "knex", "socket.io", "ws", "uuid",
     "next", "nuxt", "gatsby", "svelte", "tailwindcss", "postcss",
     "jest", "mocha", "chai", "sinon", "cypress", "puppeteer",
+    # vite/vitest는 vue와 편집 거리 2라, 목록에 없으면 정상 패키지가 오탐된다
+    "vite", "vitest", "rollup", "esbuild",
 }
 
 THRESHOLD = 0.85  # 0.9 → 0.85로 낮춰 transposition 탐지 강화

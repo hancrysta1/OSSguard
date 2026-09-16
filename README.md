@@ -34,7 +34,7 @@
 |------|------|------|
 | **SBOM** | Syft | 프로젝트 내 모든 패키지의 이름·버전·라이선스를 SPDX JSON으로 목록화 |
 | **SCA** | Trivy | SBOM 기반으로 각 패키지의 알려진 CVE를 NVD/OSV에서 조회, 업데이트 권고 생성 |
-| **MITRE ATT&CK** | cve.circl.lu API | CVE → CAPEC(공격 패턴) / CWE(취약점 유형) 매핑으로 위협 성격 식별 |
+| **CVE 분류 매핑** | cve.circl.lu API | CVE → CAPEC(공격 패턴) / CWE(취약점 유형) 라벨 부여로 위협 성격 식별 (ATT&CK 기법 ID는 부여하지 않음) |
 | **악성코드 1차** | YARA (13룰) + 키워드 | 위험 함수(`exec`, `eval`), 난독화(`base64`), 하드코딩 시크릿, 의심 파일명 탐지 |
 | **악성코드 2차** | Ollama (LLM) | 1차 플래그를 LLM이 재판단 — 테스트 더미인지, 실제 악성인지 분류 (FP 81.8% 제거) |
 | **타이포스쿼팅** | 4종 알고리즘 | Char Insertion · Char Swap · Levenshtein · SequenceMatcher로 100+개 인기 패키지 대조 |
@@ -65,7 +65,7 @@
 |---|---|---|
 | 악성코드 탐지 | 키워드가 있으면 무조건 위험 판정 (오탐 20%) | 키워드 탐지 후 LLM이 "진짜 위험한가?" 재판단 (오탐 10%) |
 | 타이포스쿼팅 | 비교 대상 10개, 알고리즘 1개 (절반만 탐지) | 비교 대상 100+개, 알고리즘 4개 (91.7% 탐지) |
-| MITRE ATT&CK | mitreapi 라이브러리로 직접 호출 | CVE → CAPEC/CWE 병렬 매핑 (파이프라인 내장) |
+| CVE 분류 매핑 | mitreapi 라이브러리로 직접 호출 | CVE → CAPEC/CWE 병렬 매핑 (파이프라인 내장) |
 | 패키지 사전 검사 | 없음 (설치한 뒤에야 검사) | 설치 전에 먼저 검사 → 위험하면 설치 차단 |
 | AI 분석 | 없음 | 위험도 점수, 수정 제안, 라이선스 검증, 챗봇 |
 | 프론트엔드 | 페이지 구조만 존재, 더미 데이터 | 실제 API 연동, 차트/테이블/내보내기 완성 |
@@ -82,7 +82,7 @@
 | 서버 | FastAPI 2개 (GitHub :8000, PyPI/npm :8001) | FastAPI 1개 (라우터로 분리) |
 | Celery | 워커 2개 분리 (github_queue, pypi_npm_queue) | 워커 1개 (통합 파이프라인, concurrency=4) |
 | 브로커 | RabbitMQ (vhost 분리: github_vhost, pypi_npm_vhost) | Redis (브로커 + 캐시 + Pub/Sub 통합) |
-| MITRE ATT&CK | mitreapi 라이브러리 직접 호출 | CVE → CAPEC/CWE 매핑 (병렬 HTTP, 파이프라인 내장) |
+| CVE 분류 매핑 | mitreapi 라이브러리 직접 호출 | CVE → CAPEC/CWE 매핑 (병렬 HTTP, 파이프라인 내장) |
 | API | 탭별 개별 API 따로 호출 | `/g_dashboard` 한 번에 전체 반환 |
 | 진행률 | task_id 폴링 | WebSocket Push (Redis Pub/Sub) |
 | 프론트 연동 | REST API | REST API + WebSocket(실시간) |
@@ -235,7 +235,7 @@ ossguard/
 │   │   │   ├── malware.py             # 악성코드 탐지 (키워드 + YARA)
 │   │   │   ├── typosquatting.py       # 타이포스쿼팅 (4종 알고리즘)
 │   │   │   ├── dependency_confusion.py # 디펜던시 컨퓨전
-│   │   │   ├── mitre.py               # MITRE ATT&CK 매핑 (CVE → 공격기법)
+│   │   │   ├── mitre.py               # CVE → CAPEC/CWE 라벨 매핑 (cve.circl.lu)
 │   │   │   └── ai/                    # AI 서비스 (llm_sast, risk_scorer 등)
 │   │   └── workers/
 │   │       ├── tasks.py               # Celery 분석 파이프라인

@@ -5,7 +5,7 @@
 - 원본 파이프라인 설계 문서 : https://thunder-banon-a5e.notion.site/196f7776fc46806fa281d46ad50b54b2?pvs=74
 
 ```
-Clone → SBOM → SCA → MITRE 매핑 → 악성코드(YARA+LLM) → 타이포스쿼팅 → 디펜던시 컨퓨전 → AI 위험도
+Clone → SBOM → SCA → CVE 분류 매핑(CAPEC/CWE) → 악성코드(YARA+LLM) → 타이포스쿼팅 → 디펜던시 컨퓨전 → AI 위험도
 ```
 
 ---
@@ -34,13 +34,15 @@ Clone → SBOM → SCA → MITRE 매핑 → 악성코드(YARA+LLM) → 타이포
 
 ---
 
-## 3. MITRE ATT&CK 매핑
+## 3. CVE → CAPEC/CWE 매핑
 
-발견된 CVE를 실제 공격 기법과 연결한다. CVE 번호만으로는 "어떤 종류의 공격인지" 파악하기 어렵기 때문에, **CAPEC(공격 패턴)** 및 **CWE(취약점 유형)**를 매핑하여 위협의 성격을 명확히 한다.
+발견된 CVE에 **CAPEC(공격 패턴)** 과 **CWE(취약점 유형)** 라벨을 붙인다. CVE 번호만으로는 "어떤 종류의 공격인지" 파악하기 어렵기 때문에, 공개 DB에서 분류 정보를 받아와 위협의 성격을 읽을 수 있게 한다.
 
 - 예: `CVE-2023-XXXX` → CWE-79 (XSS) → CAPEC-86 (Cross-Site Scripting)
 - 보안팀이 우선순위를 정할 때 "이 CVE가 실제로 어떤 공격 시나리오에 해당하는지" 판단하는 근거가 된다.
+- 입력은 SCA가 뽑은 CVE ID 목록(중복 제거), 출력은 취약점마다 붙는 `mitre_attack` 라벨 문자열 한 개다. 값은 CAPEC 이름 → 없으면 CWE 설명 → 없으면 `Unknown` 순으로 채운다.
 - 외부 API(`cve.circl.lu`)를 `ThreadPoolExecutor(4)`로 병렬 호출하여 다수의 CVE를 빠르게 매핑
+- **ATT&CK 기법 ID(`T1059` 등)는 부여하지 않는다.** 소스코드를 스캔해 기법에 매핑하거나 실행 중 행위를 관찰하는 단계가 아니라, 이미 확정된 CVE에 분류 라벨을 덧붙이는 단계다.
 
 **구현**: `backend/app/services/mitre.py`
 

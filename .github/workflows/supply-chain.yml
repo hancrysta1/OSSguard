@@ -1,0 +1,54 @@
+name: supply-chain
+
+# 공급망 검사를 배포 파이프라인에 연결한다.
+#  1) dependency-gate    : 새로 들어오는 의존성이 타이포스쿼팅 의심인지 — 위험하면 머지 차단
+#  2) detection-quality  : 탐지기 자체의 재현율·정밀도가 기준 아래로 떨어졌는지 — 떨어지면 머지 차단
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  dependency-gate:
+    name: 의존성 타이포스쿼팅 게이트
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 의존성 설치
+        run: pip install structlog pydantic-settings
+
+      # 서비스의 설치 전 사전 검사와 같은 함수로 이 저장소의 의존성을 검사한다.
+      - name: 의존성 파일 검사
+        run: |
+          python backend/tools/check_dependencies.py \
+            backend/pyproject.toml \
+            frontend/package.json
+
+  detection-quality:
+    name: 탐지 품질 회귀 검사
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # 탐지 모듈은 Syft/Trivy/YARA/Ollama 없이 돌아간다. 임포트에 필요한 최소 의존성만 설치한다.
+      - name: 의존성 설치
+        run: pip install pytest structlog pydantic-settings
+
+      - name: 표본 27개로 재현율·정밀도 검사
+        working-directory: backend
+        run: pytest tests/test_typosquatting_quality.py -v -s
+
+      - name: Before/After 벤치마크 출력
+        working-directory: backend
+        run: python tests/benchmark/run_typo_benchmark.py

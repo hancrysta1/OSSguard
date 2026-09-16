@@ -1,6 +1,18 @@
 #!/usr/bin/env python3
-"""타이포스쿼팅 탐지 Before/After 벤치마크"""
+"""타이포스쿼팅 탐지 Before/After 벤치마크
+
+After는 서비스 코드(`app.services.typosquatting`)를 그대로 호출한다. 사본을 두면
+서비스 코드가 바뀌어도 점수가 그대로라 값이 실제 동작을 보증하지 못하기 때문이다.
+Before는 이미 없어진 옛 로직이라 재현용 사본을 남겨 둔다.
+
+실행: backend 디렉터리에서 `python3 tests/benchmark/run_typo_benchmark.py`
+(서비스 코드 임포트에 Python 3.11+ 와 structlog, pydantic-settings 가 필요하다.)
+"""
 import difflib
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 # ═══════════ Before: 기존 방식 (10개 패키지, threshold 0.9) ═══════════
 
@@ -17,70 +29,9 @@ def detect_before(pkg):
     return False, None
 
 
-# ═══════════ After: 개선 방식 (100+개, 다중 알고리즘) ═══════════
+# ═══════════ After: 현재 서비스 코드를 그대로 호출 ═══════════
 
-AFTER_PACKAGES = {
-    "requests","numpy","pandas","flask","django","scipy","matplotlib",
-    "pillow","setuptools","pip","wheel","boto3","botocore","urllib3",
-    "certifi","idna","charset-normalizer","typing-extensions","pyyaml",
-    "cryptography","pydantic","jinja2","markupsafe","click","packaging",
-    "colorama","attrs","pluggy","pytz","pytest","virtualenv","tomli",
-    "filelock","platformdirs","coverage","pygments",
-    "sqlalchemy","aiohttp","grpcio","protobuf","wrapt","decorator",
-    "cffi","pycparser","greenlet","httpx","httpcore","anyio","sniffio",
-    "rich","fastapi","uvicorn","starlette","celery","redis","psycopg2",
-    "beautifulsoup4","lxml","selenium","scrapy","paramiko",
-    "python-dateutil","tqdm","tabulate","black",
-    "isort","flake8","mypy","pylint","bandit","safety",
-    "transformers","torch","tensorflow","keras","scikit-learn",
-    "opencv-python","imageio",
-    "browser-cookie3","pycookiecheat",
-    "express","lodash","react","vue","angular","axios","moment",
-    "webpack","babel","eslint","prettier","typescript","chalk","debug",
-    "commander","inquirer","yargs","glob","minimist","dotenv",
-    "jsonwebtoken","bcrypt","cors","helmet","morgan","nodemon",
-    "mongoose","sequelize","knex","socket.io","ws","uuid",
-    "next","nuxt","gatsby","svelte","tailwindcss","postcss",
-    "jest","mocha","chai","sinon","cypress","puppeteer",
-}
-AFTER_THRESHOLD = 0.85
-
-def _levenshtein(s1, s2):
-    if len(s1) < len(s2): return _levenshtein(s2, s1)
-    if not s2: return len(s1)
-    prev = range(len(s2)+1)
-    for i, c1 in enumerate(s1):
-        curr = [i+1]
-        for j, c2 in enumerate(s2):
-            curr.append(min(curr[j]+1, prev[j+1]+1, prev[j]+(0 if c1==c2 else 1)))
-        prev = curr
-    return prev[-1]
-
-def _has_swap(s1, s2):
-    if len(s1)!=len(s2): return False
-    diffs=[(i,a,b) for i,(a,b) in enumerate(zip(s1,s2)) if a!=b]
-    return len(diffs)==2 and diffs[0][1]==diffs[1][2] and diffs[0][2]==diffs[1][1]
-
-def _has_insert(s1, s2):
-    if abs(len(s1)-len(s2))!=1: return False
-    short,long=(s1,s2) if len(s1)<len(s2) else (s2,s1)
-    skip=False; j=0
-    for i in range(len(long)):
-        if j<len(short) and long[i]==short[j]: j+=1
-        elif not skip: skip=True
-        else: return False
-    return True
-
-def detect_after(pkg):
-    name = pkg.lower().strip()
-    if name in {p.lower() for p in AFTER_PACKAGES}: return False, None
-    for off in AFTER_PACKAGES:
-        o = off.lower()
-        if _has_insert(name, o): return True, off
-        if _has_swap(name, o): return True, off
-        if _levenshtein(name, o) <= 2 and len(name) >= 4: return True, off
-        if difflib.SequenceMatcher(None, name, o).ratio() >= AFTER_THRESHOLD: return True, off
-    return False, None
+from app.services.typosquatting import detect_typosquatting as detect_after  # noqa: E402
 
 
 # ═══════════ 테스트 케이스 ═══════════
@@ -159,7 +110,7 @@ print(f"  샘플: 악성 {mal_count}개 / 정상 {ben_count}개")
 print(f"{'='*60}")
 
 b = run_benchmark("Before (10개 패키지, SequenceMatcher 0.9)", detect_before)
-a = run_benchmark("After (100+개 패키지, 다중 알고리즘)", detect_after)
+a = run_benchmark("After (서비스 코드 app.services.typosquatting 호출)", detect_after)
 
 print(f"\n{'='*60}")
 print(f"  Before vs After 비교")
